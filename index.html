@@ -37,13 +37,13 @@
   #cats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
   #cats button { border:1px solid var(--line); background:#fff; border-radius:10px; padding:12px 4px; font:inherit; color:var(--ink); }
   #cats button.on { background:var(--acc2); border-color:var(--acc); color:var(--acc); font-weight:600; }
-  #chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-  #chips button { border:1px solid var(--line); background:#fff; border-radius:999px; padding:6px 12px; font:inherit; font-size:14px; }
+  #chips, #sChips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  #chips button, #sChips button { border:1px solid var(--line); background:#fff; border-radius:999px; padding:6px 12px; font:inherit; font-size:14px; }
   .big { width:100%; border:0; border-radius:12px; background:var(--acc); color:#fff; font:inherit; font-weight:600; padding:16px; font-size:18px; }
   .big.dark { background:var(--ink); padding:14px; font-size:16px; margin-top:12px; }
   .big:disabled { opacity:.5; }
   .small { border:1px solid var(--line); background:#fff; border-radius:8px; padding:5px 10px; font:inherit; font-size:13px; color:var(--ink); }
-  #msg, #nMsg, #cMsg { min-height:22px; margin:10px 2px 0; font-size:14px; }
+  #msg, #nMsg, #cMsg, #sMsg, #fMsg { min-height:22px; margin:10px 2px 0; font-size:14px; }
   .ok { color:var(--acc); } .bad { color:var(--bad); } .warn { color:var(--warn); }
   .hint { color:var(--mut); font-size:12px; margin-top:4px; }
   .li { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 0; border-top:1px solid var(--line); font-size:14px; }
@@ -69,6 +69,15 @@
     <button class="big dark" id="connect" type="button">Kết nối</button>
     <div id="cMsg" role="status"></div>
     <div class="hint">Chưa kết nối vẫn nhập được; các khoản sẽ được lưu trong máy và gửi sau khi bạn kết nối.</div>
+  </div>
+
+  <div class="card" id="balCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <label style="margin:0">Số dư các lọ <span class="hint" style="display:inline">(nghìn đồng)</span></label>
+      <button class="small" id="bRefresh" type="button">Tải lại</button>
+    </div>
+    <div id="bList"><div class="hint">Kết nối và bấm Tải lại để xem.</div></div>
+    <div class="hint" id="bAt"></div>
   </div>
 
   <div class="card">
@@ -106,8 +115,63 @@
   </div>
 
   <div class="card" style="margin-top:14px">
-    <label>Đã gửi gần đây</label>
+    <label>Vừa gửi từ máy này</label>
     <div id="hList"><div class="hint">Chưa có khoản nào.</div></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <label style="margin:0">Lịch sử trên Google Sheets</label>
+      <button class="small" id="hRefresh" type="button">Tải lại</button>
+    </div>
+    <div id="sList"><div class="hint">Bấm Tải lại để xem.</div></div>
+    <div class="hint" id="sAt"></div>
+  </div>
+
+  <button type="button" class="tgl" id="fTgl"><span>Quỹ ngoài</span><span id="fChev">+</span></button>
+  <div id="fundBox" class="card hide" style="margin-top:-4px">
+    <div class="hint" style="margin:0 0 8px">Mỗi quỹ có một sheet riêng tên "Quỹ …", quản lý tách biệt, không tính vào các lọ hay bảng tuần.</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="fSel" style="flex:1;padding:10px;font:inherit;border:1px solid var(--line);border-radius:10px;background:#fff"></select>
+      <button class="small" id="fRefresh" type="button">Tải lại</button>
+      <button class="small" id="fNewBtn" type="button">+ Quỹ</button>
+    </div>
+    <div id="fNewBox" class="hide" style="margin-top:10px">
+      <label for="fName">Tên quỹ mới</label>
+      <input id="fName" type="text" maxlength="40" autocomplete="off" placeholder="vd Quỹ lớp, Du lịch">
+      <div style="margin-top:8px"><label for="fInit">Số dư ban đầu (nghìn đồng, có thể bỏ trống)</label>
+      <input id="fInit" type="number" inputmode="decimal" step="any" min="0" autocomplete="off"></div>
+      <button type="button" class="big dark" id="fCreate" style="margin-top:10px">Tạo quỹ</button>
+      <div class="hint">Cần có mạng.</div>
+    </div>
+    <div id="fBal" style="font-size:20px;font-weight:600;margin:12px 0 2px"></div>
+    <div class="seg" style="margin-top:8px">
+      <button type="button" id="fOut" class="on">Trừ (−)</button>
+      <button type="button" id="fIn">Cộng (+)</button>
+    </div>
+    <div style="margin-top:10px"><label for="fAmount">Số tiền (nghìn đồng)</label>
+    <input id="fAmount" type="number" inputmode="decimal" step="any" min="0" autocomplete="off"></div>
+    <div style="margin-top:10px"><label for="fNote">Ghi chú</label>
+    <input id="fNote" type="text" maxlength="80" autocomplete="off"></div>
+    <div style="margin-top:10px"><label for="fDate">Ngày</label><input id="fDate" type="date"></div>
+    <button type="button" class="big dark" id="fSave" style="margin-top:12px">Lưu vào quỹ</button>
+    <div id="fMsg" role="status"></div>
+    <div id="fList" style="margin-top:8px"></div>
+    <div class="hint" id="fAt"></div>
+  </div>
+
+  <button type="button" class="tgl" id="sTgl"><span>Nhập tiền lương / thưởng</span><span id="sChev">+</span></button>
+  <div id="salBox" class="card hide" style="margin-top:-4px">
+    <div class="hint" style="margin:0 0 8px">Ghi vào sheet Lương, ở các ô Lương / Thưởng của tháng đã chọn. Cùng loại sẽ được cộng dồn.</div>
+    <label for="sMonth">Tháng</label>
+    <input id="sMonth" type="month">
+    <div style="margin-top:10px"><label for="sAmount">Số tiền (nghìn đồng)</label>
+    <input id="sAmount" type="number" inputmode="decimal" step="any" min="0" placeholder="vd 18413 = 18.413.000đ" autocomplete="off"></div>
+    <div style="margin-top:10px"><label for="sLabel">Loại</label>
+    <input id="sLabel" type="text" maxlength="40" autocomplete="off">
+    <div id="sChips"></div></div>
+    <button type="button" class="big dark" id="sSave" style="margin-top:12px">Lưu lương</button>
+    <div id="sMsg" role="status"></div>
   </div>
 
   <button type="button" class="tgl" id="tgl"><span>Tạo sheet tuần mới</span><span id="chev">+</span></button>
@@ -153,7 +217,7 @@ function makeCore(store, fetchFn, uuid) {
     pendingCount: function () { return load(K.q, []).length; },
     enqueue: function (it) {
       var q = load(K.q, []);
-      var item = { id: uuid(), date: it.date, cat: it.cat, amount: it.amount, income: !!it.income, note: it.note || '', status: 'pending', err: '' };
+      var item = { id: uuid(), date: it.date, cat: it.cat, fund: it.fund || '', amount: it.amount, income: !!it.income, note: it.note || '', status: 'pending', err: '' };
       q.push(item); save(K.q, q); return item;
     },
     remove: function (id) { save(K.q, load(K.q, []).filter(function (x) { return x.id !== id; })); },
@@ -189,7 +253,9 @@ function makeCore(store, fetchFn, uuid) {
           tried[next.id] = true;
           var r;
           try {
-            r = await core.call('add', { id: next.id, date: next.date, cat: next.cat, amount: next.amount, income: next.income, note: next.note });
+            r = next.fund
+              ? await core.call('fundAdd', { id: next.id, fund: next.fund, date: next.date, amount: next.amount, income: next.income, note: next.note })
+              : await core.call('add', { id: next.id, date: next.date, cat: next.cat, amount: next.amount, income: next.income, note: next.note });
           } catch (e) { if (e.network) out.offline = true; else out.bad = true; break; }
           var cur = load(K.q, []);
           var idx = -1;
@@ -198,7 +264,7 @@ function makeCore(store, fetchFn, uuid) {
             if (idx >= 0) cur.splice(idx, 1);
             save(K.q, cur);
             var h = load(K.h, []);
-            h.unshift({ date: next.date, cat: next.cat, amount: next.amount, income: next.income, note: next.note, status: r.status, where: r.where, msg: r.msg });
+            h.unshift({ date: next.date, cat: next.cat, amount: next.amount, income: next.income, note: next.note, status: r.status || 'Đã đổ', where: r.where || next.fund || '', msg: r.msg || '' });
             save(K.h, h.slice(0, 30));
             out.sent++;
           } else if (r && r.error === 'auth') { out.auth = true; break; }
@@ -303,6 +369,7 @@ async function flush() {
   renderNet();
   var r = await core.flush();
   renderLists(); renderNet();
+  if (r.sent) { refreshSrv(); refreshBal(); refreshFund(); }
   return r;
 }
 
@@ -313,19 +380,46 @@ $('save').onclick = async function () {
   if (!$('date').value) return say('msg', 'Chọn ngày', 'bad');
   core.enqueue({ date: $('date').value, cat: cat, amount: amount, income: income, note: $('note').value.trim() });
   $('amount').value = ''; $('vnd').textContent = ''; $('note').value = ''; setIncome(false);
+  await submitted('msg');
+};
+async function submitted(msgId) {
   renderLists();
-  say('msg', 'Đã lưu trong máy. Đang gửi...', '');
+  say(msgId, 'Đã lưu trong máy. Đang gửi...', '');
   var r = await flush();
-  if (r.noconn) say('msg', 'Đã lưu trong máy. Hãy kết nối để gửi lên Google Sheets.', 'warn');
-  else if (r.auth) say('msg', 'Mã kết nối không đúng hoặc đã bị đổi. Vào ⚙ để dán mã mới. Khoản chi vẫn được giữ.', 'bad');
-  else if (r.bad) say('msg', 'Máy chủ trả về dữ liệu lạ. Kiểm tra web app đã đặt "Bất kỳ ai" chưa. Khoản chi vẫn được giữ.', 'bad');
-  else if (r.offline || r.left) say('msg', 'Đã lưu trong máy, sẽ tự gửi khi có mạng.', 'warn');
+  if (r.noconn) say(msgId, 'Đã lưu trong máy. Hãy kết nối để gửi lên Google Sheets.', 'warn');
+  else if (r.auth) say(msgId, 'Mã kết nối không đúng hoặc đã bị đổi. Vào ⚙ để dán mã mới. Khoản này vẫn được giữ.', 'bad');
+  else if (r.bad) say(msgId, 'Máy chủ trả về dữ liệu lạ. Kiểm tra web app đã đặt "Bất kỳ ai" chưa. Khoản này vẫn được giữ.', 'bad');
+  else if (r.offline || r.left) say(msgId, 'Đã lưu trong máy, sẽ tự gửi khi có mạng.', 'warn');
   else {
     var h = core.history()[0];
-    if (h && h.status === 'Đã đổ') say('msg', 'Đã lưu vào ' + h.where + (h.msg ? ' — ' + h.msg : ''), h.msg ? 'warn' : 'ok');
-    else if (h) say('msg', 'Đã ghi vào Nhật ký, chưa vào bảng: ' + h.msg, h.status === 'Lỗi' ? 'bad' : 'warn');
-    else say('msg', 'Đã gửi', 'ok');
+    if (h && h.status === 'Đã đổ') say(msgId, 'Đã lưu vào ' + h.where + (h.msg ? ' — ' + h.msg : ''), h.msg ? 'warn' : 'ok');
+    else if (h) say(msgId, 'Đã ghi vào Nhật ký, chưa vào bảng: ' + h.msg, h.status === 'Lỗi' ? 'bad' : 'warn');
+    else say(msgId, 'Đã gửi', 'ok');
   }
+}
+
+// ---- Lương ----
+var SAL_CHIPS = ['Lương 1', 'Lương 2', 'Thưởng', 'SXKD', 'Sinh nhật', 'Tết'];
+SAL_CHIPS.forEach(function (t) {
+  var b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+  b.onclick = function () { $('sLabel').value = t; };
+  $('sChips').appendChild(b);
+});
+$('sLabel').value = 'Lương 1';
+$('sMonth').value = today().slice(0, 7);
+$('sTgl').onclick = function () {
+  var open = $('salBox').className.indexOf('hide') >= 0;
+  show($('salBox'), open); $('sChev').textContent = open ? '−' : '+';
+};
+$('sSave').onclick = async function () {
+  var amount = parseFloat($('sAmount').value), m = $('sMonth').value, label = $('sLabel').value.trim();
+  if (!isFinite(amount) || amount <= 0) return say('sMsg', 'Nhập số tiền', 'bad');
+  if (!/^\d{4}-\d{2}$/.test(m)) return say('sMsg', 'Chọn tháng', 'bad');
+  if (!label) return say('sMsg', 'Nhập loại (vd Lương 1, Thưởng)', 'bad');
+  var date = m === today().slice(0, 7) ? today() : m + '-01';
+  core.enqueue({ date: date, cat: 'Lương', amount: amount, income: true, note: label });
+  $('sAmount').value = '';
+  await submitted('sMsg');
 };
 $('sendNow').onclick = function () { flush(); };
 
@@ -403,13 +497,151 @@ $('create').onclick = async function () {
   b.disabled = false;
 };
 
+// ---- Lịch sử từ Google Sheets (xem được cả khi offline, hiện bản tải lần gần nhất) ----
+function loadSrv() { try { return JSON.parse(localStorage.getItem('ct.srv') || 'null'); } catch (e) { return null; } }
+function renderSrv(note) {
+  var d = loadSrv(), l = $('sList'); l.innerHTML = '';
+  if (!d || !d.rows || !d.rows.length) { l.innerHTML = '<div class="hint">Chưa có dữ liệu. Bấm Tải lại khi có mạng.</div>'; $('sAt').textContent = note || ''; return; }
+  d.rows.forEach(function (it) {
+    var tag = it.status === 'Đã đổ' ? '✓' : (it.status === 'Chờ' ? '⏳' : '⚠');
+    var amt = Number(it.amount);
+    var left = String(it.date).slice(8) + '/' + String(it.date).slice(5, 7) + ' · ' + it.cat + (it.note ? ' · ' + it.note : '') + (it.status !== 'Đã đổ' && it.msg ? ' — ' + it.msg : '');
+    l.appendChild(row(left, (amt > 0 ? '+' : '−') + Math.abs(amt) + ' ' + tag));
+  });
+  $('sAt').textContent = (note || '') + 'Cập nhật ' + new Date(d.at).toLocaleString('vi-VN') + '. ✓ đã vào bảng, ⏳ đang chờ, ⚠ lỗi';
+}
+async function refreshSrv() {
+  if (!core.getConn()) { renderSrv(); return; }
+  try {
+    var r = await core.call('history', { limit: 30 });
+    if (r && r.ok) { localStorage.setItem('ct.srv', JSON.stringify({ at: Date.now(), rows: r.rows })); renderSrv(); }
+    else if (r && r.error === 'auth') renderSrv('Khóa không đúng. ');
+    else renderSrv('Chưa tải được (cần cập nhật Apps Script bản mới). ');
+  } catch (e) { renderSrv(e.network ? 'Không có mạng, đang hiện bản đã tải trước. ' : 'Chưa tải được. '); }
+}
+$('hRefresh').onclick = refreshSrv;
+
+// ---- Số dư các lọ ----
+function loadBal() { try { return JSON.parse(localStorage.getItem('ct.bal') || 'null'); } catch (e) { return null; } }
+function fmtN(n) { return n === null || n === undefined ? '—' : (n < 0 ? '−' : '') + Math.abs(Math.round(n)).toLocaleString('vi-VN'); }
+function renderBal(note) {
+  var d = loadBal(), l = $('bList'); l.innerHTML = '';
+  if (!d || !d.jars) { l.innerHTML = '<div class="hint">Chưa có dữ liệu. Kết nối và bấm Tải lại.</div>'; $('bAt').textContent = note || ''; return; }
+  function add(name, v, bold) {
+    var r = row(name, fmtN(v)); if (bold) r.style.fontWeight = '600';
+    if (v !== null && v < 0) r.style.color = 'var(--bad, #c0392b)';
+    l.appendChild(r);
+  }
+  d.jars.forEach(function (j) { add(j.name, j.value); });
+  if (d.lo4 !== null && d.lo4 !== undefined) add('Lọ 4 DH (sheet Lương)', d.lo4);
+  var sep = document.createElement('div'); sep.style.cssText = 'border-top:1px solid var(--line);margin:8px 0 4px'; l.appendChild(sep);
+  var tot = 0, okAll = true;
+  d.accounts.forEach(function (a) { add('Tài khoản ' + a.name, a.value); if (a.value === null) okAll = false; else tot += a.value; });
+  if (okAll) add('Tổng 2 tài khoản', tot, true);
+  var pend = core.queue().length;
+  $('bAt').textContent = (note || '') + 'Theo ' + d.sheet + ', cập nhật ' + new Date(d.at).toLocaleString('vi-VN') + '.' + (pend ? ' Có ' + pend + ' khoản chờ gửi chưa tính vào số dư.' : '');
+}
+async function refreshBal() {
+  if (!core.getConn()) { renderBal(); return; }
+  try {
+    var r = await core.call('balances', {});
+    if (r && r.ok) { localStorage.setItem('ct.bal', JSON.stringify({ at: Date.now(), sheet: r.sheet, jars: r.jars, accounts: r.accounts, lo4: r.lo4 })); renderBal(); }
+    else if (r && r.error === 'auth') renderBal('Khóa không đúng. ');
+    else renderBal((r && r.error ? r.error : 'Chưa tải được (cần cập nhật Apps Script bản mới).') + ' ');
+  } catch (e) { renderBal(e.network ? 'Không có mạng, đang hiện bản đã tải trước. ' : 'Chưa tải được. '); }
+}
+$('bRefresh').onclick = refreshBal;
+
+// ---- Quỹ ngoài ----
+var fundIncome = false;
+function loadF() { try { return JSON.parse(localStorage.getItem('ct.funds') || 'null'); } catch (e) { return null; } }
+function loadFR(f) { try { return (JSON.parse(localStorage.getItem('ct.frows') || '{}'))[f] || null; } catch (e) { return null; } }
+function saveFR(f, d) { var all; try { all = JSON.parse(localStorage.getItem('ct.frows') || '{}'); } catch (e) { all = {}; } all[f] = d; localStorage.setItem('ct.frows', JSON.stringify(all)); }
+function setFundIncome(v) { fundIncome = v; $('fOut').className = v ? '' : 'on'; $('fIn').className = v ? 'on' : ''; }
+$('fOut').onclick = function () { setFundIncome(false); };
+$('fIn').onclick = function () { setFundIncome(true); };
+$('fDate').value = today();
+$('fTgl').onclick = function () {
+  var open = $('fundBox').className.indexOf('hide') >= 0;
+  show($('fundBox'), open); $('fChev').textContent = open ? '−' : '+';
+  if (open) refreshFund();
+};
+$('fNewBtn').onclick = function () { show($('fNewBox'), $('fNewBox').className.indexOf('hide') >= 0); };
+function renderFund(note) {
+  var d = loadF(), sel = $('fSel'), keep = sel.value;
+  sel.innerHTML = '';
+  var list = (d && d.funds) || [];
+  if (!list.length) { var o = document.createElement('option'); o.value = ''; o.textContent = 'Chưa có quỹ nào, bấm + Quỹ'; sel.appendChild(o); }
+  list.forEach(function (f) { var o = document.createElement('option'); o.value = f.sheet; o.textContent = f.name; sel.appendChild(o); });
+  if (keep) sel.value = keep;
+  sel.onchange = function () { renderFund(); refreshFund(); };
+  var cur = sel.value, fr = cur ? loadFR(cur) : null, bal = null;
+  list.forEach(function (f) { if (f.sheet === cur) bal = f.balance; });
+  if (fr && fr.balance !== null && fr.balance !== undefined) bal = fr.balance;
+  $('fBal').textContent = cur ? 'Số dư: ' + fmtN(bal) : '';
+  var l = $('fList'); l.innerHTML = '';
+  if (fr && fr.rows) fr.rows.forEach(function (it) {
+    l.appendChild(row(String(it.date).slice(8) + '/' + String(it.date).slice(5, 7) + (it.note ? ' · ' + it.note : ''), (it.amount > 0 ? '+' : '−') + fmtN(Math.abs(it.amount)).replace('−', '')));
+  });
+  var pend = core.queue().filter(function (x) { return x.fund === cur && x.fund; }).length;
+  $('fAt').textContent = (note || '') + (d ? 'Cập nhật ' + new Date(d.at).toLocaleString('vi-VN') + '. ' : '') + (pend ? pend + ' khoản của quỹ này đang chờ gửi, chưa tính vào số dư.' : '');
+}
+async function refreshFund() {
+  if (!core.getConn()) { renderFund(); return; }
+  try {
+    var r = await core.call('funds', {});
+    if (r && r.ok) {
+      localStorage.setItem('ct.funds', JSON.stringify({ at: Date.now(), funds: r.funds }));
+      renderFund();
+      var cur = $('fSel').value;
+      if (cur) {
+        var x = await core.call('fundRows', { fund: cur, limit: 10 });
+        if (x && x.ok) { saveFR(cur, { balance: x.balance, rows: x.rows }); renderFund(); }
+      }
+    } else if (r && r.error === 'auth') renderFund('Khóa không đúng. ');
+    else renderFund('Chưa tải được (cần cập nhật Apps Script bản mới). ');
+  } catch (e) { renderFund(e.network ? 'Không có mạng, đang hiện bản đã tải trước. ' : 'Chưa tải được. '); }
+}
+$('fRefresh').onclick = refreshFund;
+$('fCreate').onclick = async function () {
+  var name = $('fName').value.trim();
+  if (!name) return say('fMsg', 'Nhập tên quỹ', 'bad');
+  say('fMsg', 'Đang tạo...', '');
+  try {
+    var r = await core.call('fundCreate', { name: name, initial: $('fInit').value });
+    if (r && r.ok) {
+      $('fName').value = ''; $('fInit').value = ''; show($('fNewBox'), false);
+      await refreshFund(); $('fSel').value = r.sheet; renderFund(); refreshFund();
+      say('fMsg', 'Đã tạo quỹ "' + r.name + '" (sheet ' + r.sheet + ')', 'ok');
+    } else say('fMsg', (r && r.error) || 'Không tạo được', 'bad');
+  } catch (e) { say('fMsg', e.noconn ? 'Hãy kết nối trước (⚙)' : e.network ? 'Cần có mạng để tạo quỹ' : 'Không tạo được', 'bad'); }
+};
+$('fSave').onclick = async function () {
+  var fund = $('fSel').value, amount = parseFloat($('fAmount').value);
+  if (!fund) return say('fMsg', 'Chọn hoặc tạo quỹ trước', 'bad');
+  if (!isFinite(amount) || amount <= 0) return say('fMsg', 'Nhập số tiền', 'bad');
+  if (!$('fDate').value) return say('fMsg', 'Chọn ngày', 'bad');
+  core.enqueue({ date: $('fDate').value, cat: fund, fund: fund, amount: amount, income: fundIncome, note: $('fNote').value.trim() });
+  $('fAmount').value = ''; $('fNote').value = '';
+  await submitted('fMsg');
+  renderFund();
+};
+
+
+
 // ---- Khởi động ----
-window.addEventListener('online', flush);
+var lastAll = 0;
+function refreshAll(force) {
+  if (!core.getConn()) return;
+  if (!force && Date.now() - lastAll < 30000) return;   // tránh gọi dồn khi bật/tắt app liên tục
+  lastAll = Date.now(); refreshSrv(); refreshBal(); refreshFund();
+}
+window.addEventListener('online', function () { flush().then(function () { refreshAll(true); }); });
 window.addEventListener('offline', renderNet);
-document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { $('date').value = $('date').value || today(); flush(); } });
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { $('date').value = $('date').value || today(); flush().then(function () { refreshAll(); }); } });
 setInterval(function () { if (document.visibilityState === 'visible' && core.pendingCount()) flush(); }, 60000);
 if (!core.getConn()) show($('connCard'), true);
-renderNet(); renderLists(); flush();
+renderNet(); renderLists(); renderSrv(); renderBal(); renderFund(); flush().then(function () { refreshAll(true); });
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
 </script>
 </body>

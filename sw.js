@@ -1,6 +1,6 @@
 // Giữ app chạy được khi mất mạng: lưu sẵn các file của app, ưu tiên bản mới khi có mạng.
 // Khi sửa app, đổi số phiên bản ở VERSION để điện thoại tải lại.
-var VERSION = 'chitieu-v1';
+var VERSION = 'chitieu-v6';
 var FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
