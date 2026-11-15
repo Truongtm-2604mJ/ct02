@@ -15,7 +15,7 @@
 <style>
   :root { --bg:#f6f7f5; --card:#fff; --ink:#1d2421; --mut:#6b7571; --line:#dfe3e0; --acc:#1f6f5c; --acc2:#e6f2ee; --bad:#b3261e; --warn:#8a5a00; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; padding:calc(12px + env(safe-area-inset-top)) env(safe-area-inset-right) calc(32px + env(safe-area-inset-bottom)) env(safe-area-inset-left); }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; padding:calc(12px + env(safe-area-inset-top)) env(safe-area-inset-right) calc(92px + env(safe-area-inset-bottom)) env(safe-area-inset-left); }
   main { max-width:480px; margin:0 auto; padding:0 16px; }
   .top { display:flex; align-items:center; justify-content:space-between; margin:4px 0 12px; }
   h1 { font-size:20px; margin:0; }
@@ -25,7 +25,7 @@
   .icon { border:0; background:transparent; font:inherit; font-size:22px; padding:6px 10px; color:var(--mut); }
   .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
   label { display:block; font-size:13px; color:var(--mut); margin:0 0 6px; }
-  input[type=number], input[type=text], input[type=date], textarea { width:100%; font:inherit; padding:12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); }
+  input[type=number], input[type=text], input[type=date], input[type=month], textarea { width:100%; font:inherit; padding:12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); }
   textarea { font-size:13px; font-family:ui-monospace,Menlo,monospace; }
   #amount { font-size:30px; font-weight:600; padding:10px 12px; }
   #amount::placeholder { font-size:16px; font-weight:400; }
@@ -50,6 +50,11 @@
   .li:first-of-type { border-top:0; }
   .li .l { min-width:0; overflow:hidden; text-overflow:ellipsis; }
   .li .r { white-space:nowrap; display:flex; gap:6px; align-items:center; }
+  #nav { position:fixed; left:0; right:0; bottom:0; z-index:5; display:flex; background:#fff; border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom); }
+  #nav button { flex:1; border:0; background:none; padding:8px 2px 9px; font:inherit; font-size:12px; color:var(--mut); display:flex; flex-direction:column; align-items:center; gap:1px; }
+  #nav .i { font-size:20px; line-height:1.1; }
+  #nav button.on { color:var(--acc); font-weight:600; }
+  .step { margin:18px 2px 8px; } .step .hint { margin-top:2px; }
   .bar { height:6px; background:var(--line); border-radius:4px; margin:-2px 0 8px; overflow:hidden; }
   .bar > i { display:block; height:100%; background:var(--acc); }
   .bar > i.warn { background:#e08a00; } .bar > i.bad { background:#c0392b; }
@@ -76,16 +81,7 @@
     <div class="hint">Chưa kết nối vẫn nhập được; các khoản sẽ được lưu trong máy và gửi sau khi bạn kết nối.</div>
   </div>
 
-  <div class="card" id="balCard">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <label style="margin:0">Số dư các lọ <span class="hint" style="display:inline">(nghìn đồng)</span></label>
-      <button class="small" id="bRefresh" type="button">Tải lại</button>
-    </div>
-    <div id="bWarn"></div>
-    <div id="bList"><div class="hint">Kết nối và bấm Tải lại để xem.</div></div>
-    <div class="hint" id="bAt"></div>
-  </div>
-
+  <section id="tab-nhap" class="tab">
   <div class="card">
     <label for="amount">Số tiền (nghìn đồng)</label>
     <input id="amount" type="number" inputmode="decimal" step="any" min="0" placeholder="vd 45 = 45.000đ" autocomplete="off">
@@ -114,28 +110,30 @@
   <button id="save" class="big" type="button">Lưu</button>
   <div id="msg" role="status"></div>
 
-  <div id="qCard" class="card hide" style="margin-top:14px">
+  <div id="qCard" class="card hide">
     <label>Chờ gửi</label>
     <div id="qList"></div>
     <button class="small" id="sendNow" type="button" style="margin-top:8px">Gửi ngay</button>
   </div>
 
-  <div class="card" style="margin-top:14px">
+  <div class="card">
     <label>Vừa gửi từ máy này</label>
     <div id="hList"><div class="hint">Chưa có khoản nào.</div></div>
   </div>
+  </section>
 
-  <div class="card" style="margin-top:14px">
+  <section id="tab-so" class="tab hide">
+  <div class="card" id="balCard">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <label style="margin:0">Lịch sử trên Google Sheets</label>
-      <button class="small" id="hRefresh" type="button">Tải lại</button>
+      <label style="margin:0">Số dư các lọ <span class="hint" style="display:inline">(nghìn đồng)</span></label>
+      <button class="small" id="bRefresh" type="button">Tải lại</button>
     </div>
-    <div id="sList"><div class="hint">Bấm Tải lại để xem.</div></div>
-    <div class="hint" id="sAt"></div>
+    <div id="bWarn"></div>
+    <div id="bList"><div class="hint">Kết nối và bấm Tải lại để xem.</div></div>
+    <div class="hint" id="bAt"></div>
   </div>
 
-  <button type="button" class="tgl" id="oTgl"><span>Tổng quan chi theo mục</span><span id="oChev">+</span></button>
-  <div id="ovBox" class="card hide" style="margin-top:-4px">
+  <div id="ovBox" class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
       <div class="hint" id="oHead" style="margin:0"></div>
       <button class="small" id="oRefresh" type="button">Tải lại</button>
@@ -144,8 +142,70 @@
     <div class="hint" id="oAt"></div>
   </div>
 
-  <button type="button" class="tgl" id="fTgl"><span>Quỹ ngoài</span><span id="fChev">+</span></button>
-  <div id="fundBox" class="card hide" style="margin-top:-4px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <label style="margin:0">Lịch sử trên Google Sheets</label>
+      <button class="small" id="hRefresh" type="button">Tải lại</button>
+    </div>
+    <div id="sList"><div class="hint">Bấm Tải lại để xem.</div></div>
+    <div class="hint" id="sAt"></div>
+  </div>
+  </section>
+
+  <section id="tab-thang" class="tab hide">
+    <div class="step"><b>Bước 1 · Tạo sheet tuần mới</b><div class="hint">Đầu tháng, khi có lương: Thứ 2 gần ngày 5 nhất là tuần đầu của tháng mới, kéo dài 4–5 tuần. Bước này cũng tạo dòng của tháng trong sheet Lương và mang số dư tháng trước sang.</div></div>
+  <div id="newBox" class="card">
+    <label for="nStart">Thứ 2 đầu tiên của sheet</label>
+    <input id="nStart" type="date">
+    <div class="row" style="margin-top:10px">
+      <div><label>Số tuần</label>
+        <div class="seg small"><button type="button" id="w4" class="on">4</button><button type="button" id="w5">5</button></div></div>
+      <div><label for="nMonth">Tháng</label><input id="nMonth" type="number" inputmode="numeric" min="1" max="12"></div>
+      <div><label for="nYear">Năm</label><input id="nYear" type="number" inputmode="numeric" min="2000" max="2100"></div>
+    </div>
+    <div style="margin-top:10px"><label for="nName">Tên sheet</label><input id="nName" type="text" maxlength="60" autocomplete="off"></div>
+    <div id="pv"></div>
+    <div style="margin-top:12px"><label>Mang số dư tháng cũ sang</label>
+      <div class="hint" style="margin:2px 0 6px">Số dư cuối sheet trước điền vào dòng Sd của sheet Lương; hàng Sd Tuần 1 của sheet mới nối với dòng Tổng của Lương tháng đó (nhớ nhập chia lọ).</div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px">
+        <label class="chk"><input type="checkbox" id="cK1" checked> Lọ 1</label>
+        <label class="chk"><input type="checkbox" id="cK2" checked> Lọ 2</label>
+        <label class="chk"><input type="checkbox" id="cK3" checked> Lọ 3</label>
+        <label class="chk"><input type="checkbox" id="cK5" checked> Lọ 5</label>
+      </div>
+    </div>
+    <button type="button" class="big dark" id="create">Tạo sheet</button>
+    <div id="nMsg" role="status"></div>
+    <div class="hint">Cần có mạng và đã kết nối.</div>
+  </div>
+    <div class="step"><b>Bước 2 · Nhập lương, rồi chia vào các lọ</b><div class="hint">Số dư tháng mới = số dư tháng trước (đã mang sang ở bước 1) + lương mới.</div></div>
+  <div id="salBox" class="card">
+    <div class="hint" style="margin:0 0 8px">Ghi vào sheet Lương, ở các ô Lương / Thưởng của tháng đã chọn. Cùng loại sẽ được cộng dồn.</div>
+    <label for="sMonth">Tháng</label>
+    <input id="sMonth" type="month">
+    <div style="margin-top:10px"><label for="sAmount">Số tiền (nghìn đồng)</label>
+    <input id="sAmount" type="number" inputmode="decimal" step="any" min="0" placeholder="vd 18413 = 18.413.000đ" autocomplete="off"></div>
+    <div style="margin-top:10px"><label for="sLabel">Loại</label>
+    <input id="sLabel" type="text" maxlength="40" autocomplete="off">
+    <div id="sChips"></div></div>
+    <button type="button" class="big dark" id="sSave" style="margin-top:12px">Lưu lương</button>
+    <div id="sMsg" role="status"></div>
+    <div style="border-top:1px solid var(--line);margin:16px 0 10px"></div>
+    <label>Chia vào các lọ (nghìn đồng)</label>
+    <div class="hint" style="margin:2px 0 8px">Tính cho tháng đã chọn ở trên. Để trống = giữ nguyên số hiện có. Nhập lại sẽ <b>thay</b> số cũ, không cộng dồn. Lọ 5 là phần còn lại, sheet tự tính.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><label for="aC">Lọ 1 Cần thiết</label><input id="aC" type="number" inputmode="decimal" step="any" min="0" autocomplete="off"></div>
+      <div><label for="aE">Lọ 2 Tự do</label><input id="aE" type="number" inputmode="decimal" step="any" min="0" autocomplete="off"></div>
+      <div><label for="aG">Lọ 3 Giáo dục</label><input id="aG" type="number" inputmode="decimal" step="any" min="0" autocomplete="off"></div>
+      <div><label for="aI">Lọ 4 DH</label><input id="aI" type="number" inputmode="decimal" step="any" min="0" autocomplete="off"></div>
+    </div>
+    <button type="button" class="big dark" id="aSave" style="margin-top:12px">Lưu chia lọ</button>
+    <div id="aMsg" role="status"></div>
+  </div>
+  </section>
+
+  <section id="tab-quy" class="tab hide">
+  <div id="fundBox" class="card">
     <div class="hint" style="margin:0 0 8px">Mỗi quỹ có một sheet riêng tên "Quỹ …", quản lý tách biệt, không tính vào các lọ hay bảng tuần.</div>
     <div style="display:flex;gap:8px;align-items:center">
       <select id="fSel" style="flex:1;padding:10px;font:inherit;border:1px solid var(--line);border-radius:10px;background:#fff"></select>
@@ -175,58 +235,16 @@
     <div id="fList" style="margin-top:8px"></div>
     <div class="hint" id="fAt"></div>
   </div>
+  </section>
 
-  <button type="button" class="tgl" id="sTgl"><span>Nhập tiền lương / thưởng</span><span id="sChev">+</span></button>
-  <div id="salBox" class="card hide" style="margin-top:-4px">
-    <div class="hint" style="margin:0 0 8px">Ghi vào sheet Lương, ở các ô Lương / Thưởng của tháng đã chọn. Cùng loại sẽ được cộng dồn.</div>
-    <label for="sMonth">Tháng</label>
-    <input id="sMonth" type="month">
-    <div style="margin-top:10px"><label for="sAmount">Số tiền (nghìn đồng)</label>
-    <input id="sAmount" type="number" inputmode="decimal" step="any" min="0" placeholder="vd 18413 = 18.413.000đ" autocomplete="off"></div>
-    <div style="margin-top:10px"><label for="sLabel">Loại</label>
-    <input id="sLabel" type="text" maxlength="40" autocomplete="off">
-    <div id="sChips"></div></div>
-    <button type="button" class="big dark" id="sSave" style="margin-top:12px">Lưu lương</button>
-    <div id="sMsg" role="status"></div>
-    <div style="border-top:1px solid var(--line);margin:16px 0 10px"></div>
-    <label>Chia vào các lọ (nghìn đồng)</label>
-    <div class="hint" style="margin:2px 0 8px">Tính cho tháng đã chọn ở trên. Để trống = giữ nguyên số hiện có. Nhập lại sẽ <b>thay</b> số cũ, không cộng dồn. Lọ 5 là phần còn lại, sheet tự tính.</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div><label for="aC">Lọ 1 Cần thiết</label><input id="aC" type="number" inputmode="decimal" step="any" min="0" autocomplete="off"></div>
-      <div><label for="aE">Lọ 2 Tự do</label><input id="aE" type="number" inputmode="decimal" step="any" min="0" autocomplete="off"></div>
-      <div><label for="aG">Lọ 3 Giáo dục</label><input id="aG" type="number" inputmode="decimal" step="any" min="0" autocomplete="off"></div>
-      <div><label for="aI">Lọ 4 DH</label><input id="aI" type="number" inputmode="decimal" step="any" min="0" autocomplete="off"></div>
-    </div>
-    <button type="button" class="big dark" id="aSave" style="margin-top:12px">Lưu chia lọ</button>
-    <div id="aMsg" role="status"></div>
-  </div>
-
-  <button type="button" class="tgl" id="tgl"><span>Tạo sheet tuần mới</span><span id="chev">+</span></button>
-  <div id="newBox" class="card hide" style="margin-top:-4px">
-    <label for="nStart">Thứ 2 đầu tiên của sheet</label>
-    <input id="nStart" type="date">
-    <div class="row" style="margin-top:10px">
-      <div><label>Số tuần</label>
-        <div class="seg small"><button type="button" id="w4" class="on">4</button><button type="button" id="w5">5</button></div></div>
-      <div><label for="nMonth">Tháng</label><input id="nMonth" type="number" inputmode="numeric" min="1" max="12"></div>
-      <div><label for="nYear">Năm</label><input id="nYear" type="number" inputmode="numeric" min="2000" max="2100"></div>
-    </div>
-    <div style="margin-top:10px"><label for="nName">Tên sheet</label><input id="nName" type="text" maxlength="60" autocomplete="off"></div>
-    <div id="pv"></div>
-    <div style="margin-top:12px"><label>Mang số dư tháng cũ sang</label>
-      <div class="hint" style="margin:2px 0 6px">Số dư cuối sheet trước điền vào dòng Sd của sheet Lương; hàng Sd Tuần 1 của sheet mới nối với dòng Tổng của Lương tháng đó (nhớ nhập chia lọ).</div>
-      <div style="display:flex;flex-wrap:wrap;gap:12px">
-        <label class="chk"><input type="checkbox" id="cK1"> Lọ 1</label>
-        <label class="chk"><input type="checkbox" id="cK2" checked> Lọ 2</label>
-        <label class="chk"><input type="checkbox" id="cK3" checked> Lọ 3</label>
-        <label class="chk"><input type="checkbox" id="cK5" checked> Lọ 5</label>
-      </div>
-    </div>
-    <button type="button" class="big dark" id="create">Tạo sheet</button>
-    <div id="nMsg" role="status"></div>
-    <div class="hint">Cần có mạng và đã kết nối.</div>
-  </div>
 </main>
+
+<nav id="nav">
+  <button type="button" id="nav-nhap" class="on"><span class="i">✏️</span><span class="t">Nhập</span></button>
+  <button type="button" id="nav-so"><span class="i">💰</span><span class="t">Số dư</span></button>
+  <button type="button" id="nav-thang"><span class="i">📅</span><span class="t">Đầu tháng</span></button>
+  <button type="button" id="nav-quy"><span class="i">🏦</span><span class="t">Quỹ</span></button>
+</nav>
 
 <script>
 // <core>
@@ -403,6 +421,7 @@ function btn(text, fn) { var b = document.createElement('button'); b.type = 'but
 
 function renderLists() {
   var q = core.queue(), ql = $('qList'); ql.innerHTML = '';
+  $('nav-nhap').querySelector('.t').textContent = q.length ? 'Nhập (' + q.length + ')' : 'Nhập';
   show($('qCard'), q.length > 0);
   q.forEach(function (it) {
     var parts = [it.date.slice(8) + '/' + it.date.slice(5, 7), it.cat + (it.note ? ' · ' + it.note : '')];
@@ -462,10 +481,6 @@ SAL_CHIPS.forEach(function (t) {
 });
 $('sLabel').value = 'Lương 1';
 $('sMonth').value = today().slice(0, 7);
-$('sTgl').onclick = function () {
-  var open = $('salBox').className.indexOf('hide') >= 0;
-  show($('salBox'), open); $('sChev').textContent = open ? '−' : '+';
-};
 
 $('aSave').onclick = async function () {
   var m = $('sMonth').value;
@@ -538,10 +553,8 @@ function autoMonth() {
   $('nMonth').value = d.getUTCMonth() + 1; $('nYear').value = d.getUTCFullYear(); autoName();
 }
 function setWeeks(n) { weeksSel = n; $('w4').className = n === 4 ? 'on' : ''; $('w5').className = n === 5 ? 'on' : ''; preview(); }
-$('tgl').onclick = async function () {
-  var open = $('newBox').className.indexOf('hide') >= 0;
-  show($('newBox'), open); $('chev').textContent = open ? '−' : '+';
-  if (open && !$('nStart').value) {
+async function loadSuggest() {
+  if (!$('nStart').value) {
     try {
       var r = await core.call('suggest', {});
       if (r && r.ok) {
@@ -563,7 +576,7 @@ $('create').onclick = async function () {
   var b = this; b.disabled = true; say('nMsg', 'Đang tạo sheet...', '');
   try {
     var r = await core.call('create', { start: s, weeks: weeksSel, month: $('nMonth').value, year: $('nYear').value, name: $('nName').value, carry: { c: $('cK1').checked, e: $('cK2').checked, g: $('cK3').checked, k: $('cK5').checked } });
-    if (r && r.ok) { say('nMsg', r.msg, 'ok'); flush(); }
+    if (r && r.ok) { say('nMsg', r.msg, 'ok'); $('nStart').value = ''; flush(); refreshAll(true); }
     else say('nMsg', 'Lỗi: ' + ((r && r.error) || 'không rõ'), 'bad');
   } catch (e) { say('nMsg', e.noconn ? 'Chưa kết nối. Bấm ⚙ để dán mã.' : e.network ? 'Không có mạng.' : 'Máy chủ trả về dữ liệu lạ.', 'bad'); }
   b.disabled = false;
@@ -670,11 +683,6 @@ async function refreshOv() {
   } catch (e) { renderOv(e.network ? 'Không có mạng, đang hiện bản đã tải trước. ' : 'Chưa tải được. '); }
 }
 $('oRefresh').onclick = refreshOv;
-$('oTgl').onclick = function () {
-  var open = $('ovBox').className.indexOf('hide') >= 0;
-  show($('ovBox'), open); $('oChev').textContent = open ? '−' : '+';
-  renderOv(); if (open) refreshOv();
-};
 
 
 // ---- Quỹ ngoài ----
@@ -686,11 +694,6 @@ function setFundIncome(v) { fundIncome = v; $('fOut').className = v ? '' : 'on';
 $('fOut').onclick = function () { setFundIncome(false); };
 $('fIn').onclick = function () { setFundIncome(true); };
 $('fDate').value = today();
-$('fTgl').onclick = function () {
-  var open = $('fundBox').className.indexOf('hide') >= 0;
-  show($('fundBox'), open); $('fChev').textContent = open ? '−' : '+';
-  if (open) refreshFund();
-};
 $('fNewBtn').onclick = function () { show($('fNewBox'), $('fNewBox').className.indexOf('hide') >= 0); };
 function renderFund(note) {
   var d = loadF(), sel = $('fSel'), keep = sel.value;
@@ -758,12 +761,22 @@ $('fSave').onclick = async function () {
 
 
 // ---- Khởi động ----
-var lastAll = 0;
+var TABS = ['nhap', 'so', 'thang', 'quy'], curTab = 'nhap', lastAll = 0;
+function showTab(t) {
+  if (TABS.indexOf(t) < 0) t = 'nhap';
+  curTab = t;
+  TABS.forEach(function (x) { show($('tab-' + x), x === t); $('nav-' + x).className = x === t ? 'on' : ''; });
+  window.scrollTo(0, 0);
+  if (t === 'so') { renderBal(); renderSrv(); renderOv(); refreshAll(); if (!loadOv()) refreshOv(); }
+  else if (t === 'thang') loadSuggest();
+  else if (t === 'quy') { renderFund(); refreshFund(); }
+}
+TABS.forEach(function (x) { $('nav-' + x).onclick = function () { showTab(x); }; });
 function refreshAll(force) {
   if (!core.getConn()) return;
   if (!force && Date.now() - lastAll < 30000) return;   // tránh gọi dồn khi bật/tắt app liên tục
   lastAll = Date.now(); refreshSrv(); refreshBal(); refreshFund();
-  if ($('ovBox').className.indexOf('hide') < 0) refreshOv();
+  if (curTab === 'so') refreshOv();
 }
 window.addEventListener('online', function () { flush().then(function () { refreshAll(true); }); });
 window.addEventListener('offline', renderNet);
