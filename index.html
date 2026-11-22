@@ -55,6 +55,9 @@
   #nav .i { font-size:20px; line-height:1.1; }
   #nav button.on { color:var(--acc); font-weight:600; }
   .step { margin:18px 2px 8px; } .step .hint { margin-top:2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  button.busy { opacity:.8; }
+  button.busy::before { content:''; display:inline-block; width:11px; height:11px; margin-right:6px; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:spin .7s linear infinite; vertical-align:-1px; }
   .bar { height:6px; background:var(--line); border-radius:4px; margin:-2px 0 8px; overflow:hidden; }
   .bar > i { display:block; height:100%; background:var(--acc); }
   .bar > i.warn { background:#e08a00; } .bar > i.bad { background:#c0392b; }
@@ -128,6 +131,7 @@
       <label style="margin:0">Số dư các lọ <span class="hint" style="display:inline">(nghìn đồng)</span></label>
       <button class="small" id="bRefresh" type="button">Tải lại</button>
     </div>
+    <div class="hint" id="bPeriod" style="margin:0 0 6px"></div>
     <div id="bWarn"></div>
     <div id="bList"><div class="hint">Kết nối và bấm Tải lại để xem.</div></div>
     <div class="hint" id="bAt"></div>
@@ -541,6 +545,7 @@ function preview() {
   if (!s) { $('pv').textContent = ''; return; }
   if (!isMon(s)) { $('pv').textContent = 'Ngày này không phải thứ Hai'; return; }
   for (var i = 0; i < weeksSel; i++) out.push('Tuần ' + (i + 1) + ': ' + dm(ms(s) + i * 7 * 864e5) + ' - ' + dm(ms(s) + (i * 7 + 6) * 864e5));
+  out.unshift('Bắt đầu ' + dm(ms(s)) + ' → kết thúc ' + dm(ms(s) + (weeksSel * 7 - 1) * 864e5) + ' (' + weeksSel + ' tuần)');
   $('pv').textContent = out.join('\n');
 }
 function autoName() {
@@ -612,9 +617,20 @@ $('hRefresh').onclick = refreshSrv;
 
 // ---- Số dư các lọ ----
 function loadBal() { try { return JSON.parse(localStorage.getItem('ct.bal') || 'null'); } catch (e) { return null; } }
+function fmtD(ymd) { return String(ymd).slice(8, 10) + '/' + String(ymd).slice(5, 7); }
+function dayDiff(a, b) { return Math.round((Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1, +b.slice(8, 10)) - Date.UTC(+a.slice(0, 4), +a.slice(5, 7) - 1, +a.slice(8, 10))) / 864e5); }
+/** "09/11 → 06/12 · 4 tuần · ngày 14/28, còn 14 ngày" */
+function periodText(p) {
+  if (!p || !p.start) return '';
+  var total = p.weeks * 7, t = today(), s = fmtD(p.start) + ' → ' + fmtD(p.end) + ' · ' + p.weeks + ' tuần', n = dayDiff(p.start, t) + 1;
+  if (n < 1) return s + ' · chưa bắt đầu (còn ' + (1 - n) + ' ngày)';
+  if (n > total) return s + ' · đã kết thúc';
+  return s + ' · ngày ' + n + '/' + total + ', còn ' + (total - n) + ' ngày';
+}
 function fmtN(n) { return n === null || n === undefined ? '—' : (n < 0 ? '−' : '') + Math.abs(Math.round(n)).toLocaleString('vi-VN'); }
 function renderBal(note) {
   var d = loadBal(), l = $('bList'); l.innerHTML = '';
+  $('bPeriod').textContent = d && d.period ? 'Kỳ ' + d.sheet + ': ' + periodText(d.period) : '';
   if (!d || !d.jars) { $('bWarn').innerHTML = ''; l.innerHTML = '<div class="hint">Chưa có dữ liệu. Kết nối và bấm Tải lại.</div>'; $('bAt').textContent = note || ''; return; }
   function add(name, v, bold) {
     var r = row(name, fmtN(v)); if (bold) r.style.fontWeight = '600';
@@ -646,7 +662,7 @@ async function refreshBal() {
   if (!core.getConn()) { renderBal(); return; }
   try {
     var r = await core.call('balances', {});
-    if (r && r.ok) { localStorage.setItem('ct.bal', JSON.stringify({ at: Date.now(), sheet: r.sheet, jars: r.jars, accounts: r.accounts, lo4: r.lo4 })); renderBal(); }
+    if (r && r.ok) { localStorage.setItem('ct.bal', JSON.stringify({ at: Date.now(), sheet: r.sheet, period: r.period, jars: r.jars, accounts: r.accounts, lo4: r.lo4 })); renderBal(); }
     else if (r && r.error === 'auth') renderBal('Khóa không đúng. ');
     else renderBal((r && r.error ? r.error : 'Chưa tải được (cần cập nhật Apps Script bản mới).') + ' ');
   } catch (e) { renderBal(e.network ? 'Không có mạng, đang hiện bản đã tải trước. ' : 'Chưa tải được. '); }
@@ -658,7 +674,7 @@ function loadOv() { try { return JSON.parse(localStorage.getItem('ct.ov') || 'nu
 function renderOv(note) {
   var d = loadOv(), l = $('oList'); l.innerHTML = '';
   if (!d || !d.cats) { $('oHead').textContent = ''; l.innerHTML = '<div class="hint">Chưa có dữ liệu. Bấm Tải lại khi có mạng.</div>'; $('oAt').textContent = note || ''; return; }
-  $('oHead').textContent = 'Chi (nghìn đồng) · ' + d.sheet + (d.prevSheet ? ', so với ' + d.prevSheet : '');
+  $('oHead').textContent = 'Chi (nghìn đồng) · ' + d.sheet + (d.period ? ' (' + periodText(d.period) + ')' : '') + (d.prevSheet ? ', so với ' + d.prevSheet : '');
   var max = 1;
   d.cats.forEach(function (c) { max = Math.max(max, Math.abs(c.now), Math.abs(c.prev || 0)); });
   d.cats.slice().sort(function (a, b) { return b.now - a.now; }).forEach(function (c) {
@@ -677,7 +693,7 @@ async function refreshOv() {
   if (!core.getConn()) { renderOv(); return; }
   try {
     var r = await core.call('overview', {});
-    if (r && r.ok) { localStorage.setItem('ct.ov', JSON.stringify({ at: Date.now(), sheet: r.sheet, prevSheet: r.prevSheet, cats: r.cats, total: r.total, prevTotal: r.prevTotal })); renderOv(); }
+    if (r && r.ok) { localStorage.setItem('ct.ov', JSON.stringify({ at: Date.now(), sheet: r.sheet, period: r.period, prevSheet: r.prevSheet, cats: r.cats, total: r.total, prevTotal: r.prevTotal })); renderOv(); }
     else if (r && r.error === 'auth') renderOv('Khóa không đúng. ');
     else renderOv((r && r.error ? r.error : 'Chưa tải được (cần cập nhật Apps Script bản mới).') + ' ');
   } catch (e) { renderOv(e.network ? 'Không có mạng, đang hiện bản đã tải trước. ' : 'Chưa tải được. '); }
@@ -783,6 +799,23 @@ window.addEventListener('offline', renderNet);
 document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { $('date').value = $('date').value || today(); flush().then(function () { refreshAll(); }); } });
 setInterval(function () { if (document.visibilityState === 'visible' && core.pendingCount()) flush(); }, 60000);
 if (!core.getConn()) show($('connCard'), true);
+/** Bọc hàm tải: nút hiện vòng quay + "Đang tải" (ít nhất 0,5 giây để nhìn thấy), kể cả khi tải tự động. */
+function tracked(btnId, fn) {
+  var n = 0;
+  return async function () {
+    var b = $(btnId), t0 = Date.now();
+    if (n++ === 0) { b.dataset.t = b.textContent; b.disabled = true; b.classList.add('busy'); b.textContent = 'Đang tải'; }
+    try { return await fn.apply(this, arguments); }
+    finally {
+      await new Promise(function (r) { setTimeout(r, Math.max(0, 500 - (Date.now() - t0))); });
+      if (--n === 0) { b.disabled = false; b.classList.remove('busy'); b.textContent = b.dataset.t || 'Tải lại'; }
+    }
+  };
+}
+refreshSrv = tracked('hRefresh', refreshSrv); $('hRefresh').onclick = refreshSrv;
+refreshBal = tracked('bRefresh', refreshBal); $('bRefresh').onclick = refreshBal;
+refreshFund = tracked('fRefresh', refreshFund); $('fRefresh').onclick = refreshFund;
+refreshOv = tracked('oRefresh', refreshOv); $('oRefresh').onclick = refreshOv;
 renderNet(); renderLists(); renderSrv(); renderBal(); renderFund(); flush().then(function () { refreshAll(true); });
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
 </script>
