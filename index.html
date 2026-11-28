@@ -905,11 +905,12 @@ function renderTk(note) {
   var dl = $('tkDet'); dl.innerHTML = '';
   det.cats.slice().sort(function (a, b) { return b.total - a.total; }).forEach(function (c) {
     if (!c.items.length) return;
-    var rw = row(c.name + ' · ' + c.items.length + ' khoản', fmtN(c.total) + ' ▾'); rw.style.cursor = 'pointer';
+    var rw = row(c.name + ' · ' + c.items.reduce(function (n, it) { return n + ((it.parts && it.parts.length) || 1); }, 0) + ' khoản', fmtN(c.total) + ' ▾'); rw.style.cursor = 'pointer';
     var box = document.createElement('div'); box.className = 'det hide';
     c.items.forEach(function (it) {
       var l = (it.date ? fmtD(it.date) : 'Tuần ' + it.week) + (it.label ? ' · ' + it.label : '');
-      var r = document.createElement('div'); r.innerHTML = '<span>' + esc(l) + '</span><span>' + (it.amount < 0 ? 'hoàn ' : '') + fmtN(Math.abs(it.amount)) + '</span>'; box.appendChild(r);
+      if (it.parts && it.parts.length > 1) it.parts.slice().sort(function (x, y) { return y - x; }).forEach(function (pv) { var q = document.createElement('div'); q.innerHTML = '<span>' + esc(l) + '</span><span>' + (pv < 0 ? 'hoàn ' : '') + fmtN(Math.abs(pv)) + '</span>'; box.appendChild(q); });
+      else { var r = document.createElement('div'); r.innerHTML = '<span>' + esc(l) + '</span><span>' + (it.amount < 0 ? 'hoàn ' : '') + fmtN(Math.abs(it.amount)) + '</span>'; box.appendChild(r); }
     });
     rw.onclick = function () { show(box, box.className.indexOf('hide') >= 0); };
     dl.appendChild(rw); dl.appendChild(box);
